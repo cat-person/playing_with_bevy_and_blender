@@ -1,20 +1,16 @@
 use bevy::prelude::*;
+use orbiting_camera_plugin::{Orbit, OrbitingCameraPlugin};
+mod orbiting_camera_plugin;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
+        .add_systems(PreUpdate, keyboard_input)
+        .add_plugins(OrbitingCameraPlugin)
         .run();
 }
 
-#[derive(Component)]
-struct Position { x: f32, y: f32 }
-
-#[derive(Component)]
-struct Person;
-
-#[derive(Component)]
-struct Name(String);
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(
@@ -28,13 +24,30 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     });
 
-    commands.spawn(Camera3dBundle{
-        transform: Transform::from_xyz(0.0, 0.4,0.4).looking_at(Vec3::ZERO, Vec3::Y),
-        ..Default::default()
-    });
-
     commands.spawn(SceneBundle{
         scene: asset_server.load("board.glb#Scene0"),
         ..Default::default()
     });
+}
+
+fn keyboard_input(
+    keys: Res<Input<KeyCode>>,
+    time: Res<Time>,
+    mut event_writer: EventWriter<Orbit>
+) {
+    // we can check multiple at once with `.any_*`
+    if keys.any_pressed([KeyCode::W, KeyCode::S, KeyCode::A, KeyCode::D]) {
+        let mut movement = Vec3::ZERO;
+        if keys.pressed(KeyCode::W) {
+            movement = Vec3::new(0.0, time.delta_seconds(), 0.0);
+        } else if keys.pressed(KeyCode::S) {
+            movement = Vec3::new(0.0, -time.delta_seconds(), 0.0);
+        } else if keys.pressed(KeyCode::A) {
+            movement = Vec3::new(time.delta_seconds(), 0.0, 0.0);
+        } else if keys.pressed(KeyCode::D) {
+            movement = Vec3::new(-time.delta_seconds(), 0.0, 0.0);
+        }
+        
+        event_writer.send(Orbit{ movement })
+    }
 }
