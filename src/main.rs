@@ -7,6 +7,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
         .add_systems(PreUpdate, keyboard_input)
+        .add_systems(Update, light_orbiting)
         .add_plugins(OrbitingCameraPlugin)
         .run();
 }
@@ -50,4 +51,9 @@ fn keyboard_input(
         
         event_writer.send(Orbit{ movement })
     }
+}
+
+fn light_orbiting(time: Res<Time>, mut query: Query<(&mut DirectionalLight , &mut Transform)>) {
+        let (_, mut transform) = query.single_mut();
+        transform.rotate_around(Vec3::ZERO, Quat::from_rotation_y(0.2 * time.delta_seconds()));
 }
