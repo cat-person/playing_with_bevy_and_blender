@@ -1,10 +1,12 @@
 use bevy::prelude::*;
 use orbiting_camera_plugin::{Orbit, OrbitingCameraPlugin};
+use stl_loader_plugin::{StlLoaderPlugin};
 mod orbiting_camera_plugin;
+mod stl_loader_plugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((DefaultPlugins, StlLoaderPlugin))
         .add_systems(Startup, setup)
         .add_systems(PreUpdate, keyboard_input)
         .add_systems(Update, light_orbiting)
@@ -13,7 +15,7 @@ fn main() {
 }
 
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: ResMut<Assets<StandardMaterial>>) {
     commands.spawn(
     DirectionalLightBundle{
         directional_light: DirectionalLight {
@@ -25,10 +27,18 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     });
 
-    commands.spawn(SceneBundle{
-        scene: asset_server.load("board.glb#Scene0"),
+    let meow: Handle<Mesh> = asset_server.load("card.stl");
+
+    commands.spawn(PbrBundle {
+        mesh: meow,
+        material: materials.add(Color::rgb(0.9, 0.4, 0.3).into()),
         ..Default::default()
     });
+
+    // commands.spawn(SceneBundle{
+    //     scene: asset_server.load("card.glb#Scene0"),
+    //     ..Default::default()
+    // });
 }
 
 fn keyboard_input(
