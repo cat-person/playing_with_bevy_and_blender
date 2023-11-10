@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::prelude::*;
 use orbiting_camera_plugin::{Orbit, OrbitingCameraPlugin};
 use stl_loader_plugin::{StlLoaderPlugin};
@@ -27,18 +29,29 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: 
         ..default()
     });
 
-    let meow: Handle<Mesh> = asset_server.load("card.stl");
+    let card_bundle = PbrBundle {
+        mesh: asset_server.load("card.stl"),
+        material: materials.add(Color::rgb(0.9, 0.4, 0.3).into()),
+        transform: Transform::from_translation(Vec3::new(-0.3, 0.0, 0.25))
+            .with_rotation(Quat::from_rotation_x(- PI / 2.0)),
+        ..Default::default()
+    };
+
+    let card_bundle_2 = PbrBundle {
+        transform: Transform::from_translation(Vec3::new(-0.1, 0.0, 0.25))
+            .with_rotation(Quat::from_rotation_x(- PI / 2.0)),
+        ..card_bundle.clone()
+    };
+
+    commands.spawn(card_bundle);
+    commands.spawn(card_bundle_2);
 
     commands.spawn(PbrBundle {
-        mesh: meow,
-        material: materials.add(Color::rgb(0.9, 0.4, 0.3).into()),
+        mesh: asset_server.load("board.stl"),
+        material: materials.add(Color::rgb(0.1, 0.4, 0.5).into()),
+        transform: Transform::from_rotation(Quat::from_rotation_x(- PI / 2.0)),
         ..Default::default()
     });
-
-    // commands.spawn(SceneBundle{
-    //     scene: asset_server.load("card.glb#Scene0"),
-    //     ..Default::default()
-    // });
 }
 
 fn keyboard_input(
@@ -47,23 +60,18 @@ fn keyboard_input(
     mut event_writer: EventWriter<Orbit>
 ) {
     // we can check multiple at once with `.any_*`
-    if keys.any_pressed([KeyCode::W, KeyCode::S, KeyCode::A, KeyCode::D]) {
-        let mut movement = Vec3::ZERO;
-        if keys.pressed(KeyCode::W) {
-            movement = Vec3::new(0.0, time.delta_seconds(), 0.0);
-        } else if keys.pressed(KeyCode::S) {
-            movement = Vec3::new(0.0, -time.delta_seconds(), 0.0);
-        } else if keys.pressed(KeyCode::A) {
-            movement = Vec3::new(time.delta_seconds(), 0.0, 0.0);
-        } else if keys.pressed(KeyCode::D) {
-            movement = Vec3::new(-time.delta_seconds(), 0.0, 0.0);
-        }
-        
-        event_writer.send(Orbit{ movement })
+    if keys.pressed(KeyCode::W) {
+        event_writer.send(Orbit{movement: Vec3::new(0.0, time.delta_seconds(), 0.0)});
+    } else if keys.pressed(KeyCode::S) {
+        event_writer.send(Orbit{movement: Vec3::new(0.0, -time.delta_seconds(), 0.0)});
+    } else if keys.pressed(KeyCode::A) {
+        event_writer.send(Orbit{movement: Vec3::new(time.delta_seconds(), 0.0, 0.0)});
+    } else if keys.pressed(KeyCode::D) {
+        event_writer.send(Orbit{movement: Vec3::new(-time.delta_seconds(), 0.0, 0.0)});
     }
 }
 
 fn light_orbiting(time: Res<Time>, mut query: Query<(&mut DirectionalLight , &mut Transform)>) {
         let (_, mut transform) = query.single_mut();
-        transform.rotate_around(Vec3::ZERO, Quat::from_rotation_y(0.2 * time.delta_seconds()));
+        transform.rotate_around(Vec3::ZERO, Quat::from_rotation_y(1.0 * time.delta_seconds()));
 }
